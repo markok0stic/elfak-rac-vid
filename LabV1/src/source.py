@@ -9,7 +9,7 @@ def anullPixels(matrix, x, y):
 
 
 # Load gray image
-img = cv.imread('../assets/input.png', 0)
+img = cv.imread('input.png', 0)
 
 # Perform 2D Fourier Transform
 f = np.fft.fft2(img)
