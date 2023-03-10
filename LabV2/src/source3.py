@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 # Učitavanje slike novčića
-img = cv2.imread('coins.jpg')
+img = cv2.imread('coins.png')
 
 # Pretvaranje u grayscale
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
