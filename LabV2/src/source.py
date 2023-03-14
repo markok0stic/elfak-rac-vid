@@ -1,43 +1,51 @@
-import cv2
+import cv2 as cv
 import numpy as np
 
-# Učitavanje slike
-img = cv2.imread('coins.png')
+# Load the input image
+image = cv.imread('coins.png')
 
-# Konvertovanje slike u grayscale
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+# Convert the image to grayscale
+gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
-# Prag segmentacija za izdvajanje novčića
-th, threshed = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY)
+# Apply a threshold to the grayscale image to convert it into a binary image
+_, thresh = cv.threshold(gray, 150, 255, cv.THRESH_BINARY_INV)
 
-# Morfološke operacije za popunjavanje rupa
-kernel = np.ones((5,5),np.uint8)
-closed = cv2.morphologyEx(threshed, cv2.MORPH_CLOSE, kernel)
+# Define a kernel for morphological operations
+kernel = cv.getStructuringElement(cv.MORPH_RECT, (2,2))
 
-# Filtriranje viškova
-opened = cv2.morphologyEx(closed, cv2.MORPH_OPEN, kernel)
+# Perform morphological dilation, erosion, closing, and opening operations on the binary image
+closing = cv.morphologyEx(thresh, cv.MORPH_CLOSE, kernel)
+opening = cv.morphologyEx(thresh, cv.MORPH_OPEN, kernel)
 
-# Konvertovanje slike u HSV prostor boja
-hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+# Find contours (boundaries of connected regions) in the opened binary image
+cnts = cv.findContours(closing, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+cnts = cnts[0] if len(cnts) == 2 else cnts[1]
 
-# Segmentacija markera na Saturation kanalu
-marker = cv2.inRange(hsv, (0, 0, 100), (255, 255, 150))
+# Create a mask from the filtered binary image to keep only the regions of interest
+mask = np.zeros_like(closing)
 
-# Filtriranje nepotrebnih piksela
-filtered = cv2.bitwise_and(opened, marker)
+# Iterate over the detected contours and filter out objects with the same color
+for c in cnts:
+    # Compute the average color of the object
+    mask.fill(0)
+    cv.drawContours(mask, [c], -1, 255, -1)
+    avg_color = cv.mean(image, mask=mask)[:3]
 
-# Morfološka rekonstrukcija za izdvajanje bakarnog novčića
-kernel = np.ones((3,3),np.uint8)
-marker = cv2.erode(filtered, kernel, iterations=2)
-reconstructed = cv2.dilate(marker, kernel, iterations=2)
+    # Check if the color of the object is significantly different from the background color
+    bg_color = [128, 128, 128]
+    color_diff = np.linalg.norm(np.array(avg_color) - np.array(bg_color))
+    if color_diff > 50:
+        cv.drawContours(mask, [c], -1, 255, -1)
 
-# Pravljenje maske bakarnog novčića
-mask = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)
-_, contours, _ = cv2.findContours(reconstructed, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-for contour in contours:
-    area = cv2.contourArea(contour)
-    if area >= 0.9 * img.shape[0] * img.shape[1] * 0.01 and area <= 1.1 * img.shape[0] * img.shape[1] * 0.05:
-        cv2.drawContours(mask, [contour], 0, 255, -1)
+# Show the mask
+cv.imshow('coin_mask.png', mask)
+cv.imwrite('coin_mask.png', mask)
 
-# Cuvanje izlazne maske
-cv2.imwrite('coin_mask.png', mask)
+# Apply the mask to the original image to obtain the masked image
+result = cv.bitwise_and(image, image, mask=mask)
+
+# Show the masked image
+cv.imshow('masked_coin', result)
+
+cv.waitKey(0)
+cv.destroyAllWindows()
