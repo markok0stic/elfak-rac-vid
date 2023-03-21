@@ -11,11 +11,11 @@ gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 _, thresh = cv.threshold(gray, 150, 255, cv.THRESH_BINARY_INV)
 
 # Define a kernel for morphological operations
-kernel = cv.getStructuringElement(cv.MORPH_RECT, (2,2))
+ker = cv.getStructuringElement(cv.MORPH_RECT, (2, 2))
 
 # Perform morphological dilation, erosion, closing, and opening operations on the binary image
-closing = cv.morphologyEx(thresh, cv.MORPH_CLOSE, kernel)
-opening = cv.morphologyEx(thresh, cv.MORPH_OPEN, kernel)
+closing = cv.morphologyEx(thresh, cv.MORPH_CLOSE, ker)
+opening = cv.morphologyEx(thresh, cv.MORPH_OPEN, ker)
 
 # Find contours (boundaries of connected regions) in the opened binary image
 cnts = cv.findContours(closing, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
