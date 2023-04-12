@@ -2,27 +2,28 @@ import cv2
 import numpy as np
 
 
-
 def findhomography_and_concat(slika1, slika2):
-    sift = cv2.SIFT_create(nfeatures=2000) # nfeatures=2000 koliko ficera da trazi
+    sift = cv2.SIFT_create(nfeatures=2000)  # nfeatures=2000 koliko ficera da trazi
 
-    kp1, ds1 = sift.detectAndCompute(slika1, None) # kljucne tacke i deskriptori sa 2000 ficera
-    kp2, ds2 = sift.detectAndCompute(slika2, None) # kljucne tacke i deskriptori sa 2000 ficera
+    kp1, ds1 = sift.detectAndCompute(slika1, None)  # kljucne tacke i deskriptori sa 2000 ficera
+    kp2, ds2 = sift.detectAndCompute(slika2, None)  # kljucne tacke i deskriptori sa 2000 ficera
 
     # nalazi slicnost izmedju dve slike (poklapanje ficera)
-    FLANN_INDEX_KDTREE = 1 # za poklapanje se koristi KD tree zato sto dobro radi sa 2d i 3d slikama/objektima
-    index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5) # dict kljuceva koji ce da idu FlannBasedMatcher koristim 5 kd stabala
-    search_params = dict(checks=50) # 50 iteracija
-    flann = cv2.FlannBasedMatcher(index_params, search_params) # skladistim sva poklapanja
-    matches = flann.knnMatch(ds1, ds2, k=2) # poklapam flann objekat da poklopim ficere deskriptora dve slike, ovo k=2 vraca najbolje poklopljeni par
+    FLANN_INDEX_KDTREE = 1  # za poklapanje se koristi KD tree zato sto dobro radi sa 2d i 3d slikama/objektima
+    index_params = dict(algorithm=FLANN_INDEX_KDTREE,
+                        trees=5)  # dict kljuceva koji ce da idu FlannBasedMatcher koristim 5 kd stabala
+    search_params = dict(checks=50)  # 50 iteracija
+    flann = cv2.FlannBasedMatcher(index_params, search_params)  # skladistim sva poklapanja
+    matches = flann.knnMatch(ds1, ds2,
+                             k=2)  # poklapam flann objekat da poklopim ficere deskriptora dve slike, ovo k=2 vraca najbolje poklopljeni par
 
-    good = [] # niz za dobre pogotke
+    good = []  # niz za dobre pogotke
     for m, n in matches:
-        if m.distance < 0.7 * n.distance: # razdaljina izmedju dva deskriptora m i n, ako je udaljenost mxn pomnozena sa 0.7 veca od prethodnog poklapanja, prvo se uzima
+        if m.distance < 0.7 * n.distance:  # razdaljina izmedju dva deskriptora m i n, ako je udaljenost mxn pomnozena sa 0.7 veca od prethodnog poklapanja, prvo se uzima
             good.append(m)
 
-    MIN_MATCH_COUNT = 22    # proverava dobra poklapanja i vraca kljucne tacke pomocu numpy biblioteke
-                            # zatim racuna homografsku matricu na osnovu vrednosti iz ta dva niza
+    MIN_MATCH_COUNT = 22  # proverava dobra poklapanja i vraca kljucne tacke pomocu numpy biblioteke
+    # zatim racuna homografsku matricu na osnovu vrednosti iz ta dva niza
     if len(good) > MIN_MATCH_COUNT:
         src = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
         dst = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
@@ -59,6 +60,7 @@ def concatImages(slika1, slika2, H):
     # gornja poslednja linija pred return sluzi da podesi velicinu izlazne slike, ovde je poravnavamo sa slika1 vrednoscu
 
     return output_image
+
 
 # POZIV
 slika1 = cv2.imread("3.JPG")
