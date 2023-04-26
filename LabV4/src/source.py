@@ -5,7 +5,7 @@ import imutils
 img = cv.imread('canvas.png')
 (partW, partH) = (180, 180)
 
-
+# manually inputed coords
 img = img[120:841, 401:1842]
 imgProba = img.copy()
 
