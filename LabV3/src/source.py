@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
 
-
+MIN_MATCH_COUNT = 25
+FLANN_INDEX_KDTREE = 1  # za poklapanje se koristi KD tree zato sto dobro radi sa 2d i 3d slikama/objektima
 def findhomography_and_concat(slika1, slika2):
     sift = cv2.SIFT_create(nfeatures=2000)  # nfeatures=2000 koliko ficera da trazi
 
@@ -9,7 +10,6 @@ def findhomography_and_concat(slika1, slika2):
     kp2, ds2 = sift.detectAndCompute(slika2, None)  # kljucne tacke i deskriptori sa 2000 ficera
 
     # nalazi slicnost izmedju dve slike (poklapanje ficera)
-    FLANN_INDEX_KDTREE = 1  # za poklapanje se koristi KD tree zato sto dobro radi sa 2d i 3d slikama/objektima
     index_params = dict(algorithm=FLANN_INDEX_KDTREE,
                         trees=5)  # dict kljuceva koji ce da idu FlannBasedMatcher koristim 5 kd stabala
     search_params = dict(checks=50)  # 50 iteracija
@@ -22,7 +22,7 @@ def findhomography_and_concat(slika1, slika2):
         if m.distance < 0.7 * n.distance:  # razdaljina izmedju dva deskriptora m i n, ako je udaljenost mxn pomnozena sa 0.7 veca od prethodnog poklapanja, prvo se uzima
             good.append(m)
 
-    MIN_MATCH_COUNT = 22  # proverava dobra poklapanja i vraca kljucne tacke pomocu numpy biblioteke
+     # proverava dobra poklapanja i vraca kljucne tacke pomocu numpy biblioteke
     # zatim racuna homografsku matricu na osnovu vrednosti iz ta dva niza
     if len(good) > MIN_MATCH_COUNT:
         src = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
